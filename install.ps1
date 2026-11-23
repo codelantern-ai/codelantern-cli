@@ -31,10 +31,14 @@ $ErrorActionPreference = 'Stop'
 $Repo = if ($env:REPO) { $env:REPO } else { 'codelantern-ai/codelantern-cli' }
 
 function Get-TargetArch {
-  switch ($env:PROCESSOR_ARCHITECTURE) {
+  # PROCESSOR_ARCHITECTURE reflects the *process*, not the OS. A 32-bit
+  # PowerShell host on 64-bit Windows (WOW64) reports 'x86' there and exposes
+  # the real OS architecture in PROCESSOR_ARCHITEW6432, so prefer that.
+  $osArch = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
+  switch ($osArch) {
     'AMD64' { 'amd64' }
     'ARM64' { 'arm64' }
-    default { throw "install.ps1: unsupported architecture '$($env:PROCESSOR_ARCHITECTURE)' (need amd64 or arm64)." }
+    default { throw "install.ps1: unsupported architecture '$osArch' (need amd64 or arm64)." }
   }
 }
 
